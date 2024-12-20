@@ -4,8 +4,8 @@ compatibility_date = "2024-11-22"
 
 # compatibility_flags = [ "nodejs_compat" ]
 
-# [vars]
-# MY_VAR = "my-variable"
+[vars]
+DATABASE_URL="postgresql://neondb_owner:MnaJB2YDf3SU@ep-mute-tooth-a1kf02os.ap-southeast-1.aws.neon.tech/neondb?sslmode=require"
 
 # [[kv_namespaces]]
 # binding = "MY_KV_NAMESPACE"
@@ -23,6 +23,5 @@ compatibility_date = "2024-11-22"
 # [ai]
 # binding = "AI"
 
-# [observability]
-# enabled = true
-# head_sampling_rate = 1
+[observability.logs]
+enabled = true
