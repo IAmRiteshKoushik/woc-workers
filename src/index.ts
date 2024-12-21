@@ -80,7 +80,11 @@ app.post('/:webhook', async (c) => {
           console.log(error);
           return c.json({}, 500);
         }
-      // For handling of issue labelling, unlabelling, assigning, unassigning
+
+
+      /*
+       * Issue labelling, unlabelling, assignment, closing, unassignment
+       */
       case 'issues':
         const issueAction = payload.action;
         switch (issueAction) {
@@ -126,7 +130,9 @@ app.post('/:webhook', async (c) => {
 
               if (!checkResult.rows[0].exists) {
                 await client.query("COMMIT");
-                return c.json({}, 200);
+                return c.json({
+                  message: "Issue has not been accepted for WoC"
+                }, 200);
               }
 
               const updateQuery = `UPDATE "Issue" SET "claimedBy" = $1 WHERE "issueId" = $2`;
@@ -228,6 +234,11 @@ app.post('/:webhook', async (c) => {
           default:
             break;
         }
+
+
+      /*
+       * All bounties are added to a BountyLog and to the Participant table itself
+       */
       case 'issue_comment':
         const commentedBy = payload.comment.user.login;
         const isMaintainer = Hooks[webhook].indexOf(commentedBy) !== -1;
@@ -318,12 +329,58 @@ app.post('/:webhook', async (c) => {
           default:
             break
         }
+
+      /* 
+       * Pull Request are going to go into the Solution table where they 
+       * are only concerned with the tag "AMWOC-accepted" 
+       * */
       case 'pull_request':
-        try {
+        const prAction = payload.action;
+        const isValidLabel = payload.label.name === "AMWOC-accepted";
+        if (!isValidLabel) {
+          return c.json({
+            message: "Not a AMWOC Pull Request"
+          }, 200);
+        }
 
-          return c.json({}, 200); // Success
-        } catch (error) {
+        // Insertion and Deletion will happen based on id
+        const id = payload.pull_request.id;
 
+        switch (prAction) {
+          case "labeled":
+            const username = payload.pull_request.user.login;
+            const repoId = payload;
+            const url = payload.pull_request.url;
+            try {
+              const query = `INSERT INTO "Solution" ("id", "repoId", "username", "url") VALUES ($1, $2, $3, $4)`;
+              const values = [id, repoId, username, url];
+              await client.query(query, values);
+
+              return c.json({
+                message: "PR labelled by maintainer"
+              }, 200);
+            } catch (error) {
+              console.log(error);
+              return c.json({
+                message: "Internal Server Error"
+              }, 500);
+            }
+          case "unlabeled":
+            try {
+              const query = `DELETE FROM "Solution" WHERE "id" = $1`;
+              await client.query(query, [id]);
+
+              return c.json({
+                message: "PR unlabelled by maintainer"
+              }, 200);
+            } catch (error) {
+              console.log(error);
+              return c.json({
+                message: "Internal Server Error"
+              }, 500);
+            }
+          default:
+            break;
         }
       default:
         return c.json({}, 200); // Success
@@ -334,12 +391,5 @@ app.post('/:webhook', async (c) => {
     }, 500);
   }
 });
-
-/*
- * WebHook for the following things:
- * 1. Issue comments
- * 2. Labels (Label created, edited or deleted)
- * 3. Pull Request Reviews
- */
 
 export default app
