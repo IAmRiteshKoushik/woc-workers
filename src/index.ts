@@ -96,7 +96,7 @@ app.post('/:webhook', async (c) => {
             }
             try {
               const query = `INSERT INTO "Issue" ("issueId", "repoId", "url") VALUES($1, $2, $3)`;
-              const values = [payload.issue.id, payload.issue.url, payload.repository.id];
+              const values = [payload.issue.id, payload.repository.id, payload.issue.url];
               await client.query(query, values);
               return c.json({}, 200);
             } catch (error) {
@@ -210,7 +210,7 @@ app.post('/:webhook', async (c) => {
             try {
               await client.query("BEGIN");
 
-              const checkQuery = `SELECT EXISTS(SELECT 1 from "Issue" WHERE "issueId" = $1`;
+              const checkQuery = `SELECT EXISTS(SELECT 1 from "Issue" WHERE "issueId" = $1)`;
               const checkResult = await client.query(checkQuery, [payload.issue.id]);
 
               if (!checkResult.rows[0].exists) {
