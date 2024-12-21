@@ -183,7 +183,7 @@ app.post('/:webhook', async (c) => {
             try {
               await client.query("BEGIN");
 
-              const checkQuery = `SELECT EXISTS(SELECT 1 from "Issue" WHERE "issueId" = $1`;
+              const checkQuery = `SELECT EXISTS(SELECT 1 from "Issue" WHERE "issueId" = $1)`;
               const checkResult = await client.query(checkQuery, [payload.issue.id]);
 
               if (!checkResult.rows[0].exists) {
@@ -349,7 +349,7 @@ app.post('/:webhook', async (c) => {
         switch (prAction) {
           case "labeled":
             const username = payload.pull_request.user.login;
-            const repoId = payload;
+            const repoId = payload.repository.id;
             const url = payload.pull_request.url;
             try {
               const query = `INSERT INTO "Solution" ("id", "repoId", "username", "url") VALUES ($1, $2, $3, $4)`;
