@@ -2,6 +2,41 @@ import { Hono } from "hono";
 import { Client } from "@neondatabase/serverless";
 import { env } from "hono/adapter";
 
+const Hooks = {
+  // QSE
+  "c147g77m100009l2001": ['Abhinav-ark', 'Ashrockzzz2003'],
+  // Amrita PYQ
+  "c147g77m100009l2002": ['Abhinav-ark', 'Ashrockzzz2003'],
+  // Amrita Map
+  "c147g77m100009l2003": ['Abhinav-ark', 'Ashrockzzz2003'],
+  // Match Da Pairs
+  "c147g77m100009l2004": ['FirefoxSRV'],
+  // Google Maps Kotlin Android
+  "c147g77m100009l2005": ['Ashrockzzz2003'],
+  // Placement Tracker Web
+  "c147g77m100009l2006": ['Ashrockzzz2003', 'Abhinav-ark'],
+  // Placement Tracker Server
+  "c147g77m100009l2007": ['Ashrockzzz2003', 'Abhinav-ark'],
+  // Data Structures and Algorithms
+  "c147g77m100009l2008": ['Ashrockzzz2003', 'mdxaasil'],
+  // Bluedis
+  "c147g77m100009l2009": ['IAmRiteshKoushik'],
+  // Timetable CSEA
+  "c147g77m100009l2010": ['Ashrockzzz2003', 'Abhinav-ark'],
+  // Burntbrrota
+  "c147g77m100009l2011": ['amri-tah'],
+  // Leetpath
+  "c147g77m100009l2012": ['amri-tah', 'VishalTheHuman'],
+  // Burntbrrota Flutter
+  "c147g77m100009l2013": ['amri-tah'],
+  // Amrita GPT
+  "c147g77m100009l2014": ['SaranDharshanSP', 'amri-tah'],
+  // NeuroScribe
+  "c147g77m100009l2015": ['SaranDharshanSP'],
+  // TN Tourism
+  "c147g77m100009l2016": ['SaranDharshanSP'],
+}
+
 const app = new Hono()
 
 app.get("/test", async (c) => {
@@ -21,6 +56,12 @@ app.post('/:webhook', async (c) => {
     // Fetch project idea and test for event type
     const { webhook } = c.req.param();
     const event = c.req.header('X-GitHub-Event');
+
+    if (event === undefined) {
+      return c.json({
+        message: "Forbidden Function Invocation"
+      }, 403);
+    }
 
     // Deserializing the entire payload
     const payload = await c.req.json();
