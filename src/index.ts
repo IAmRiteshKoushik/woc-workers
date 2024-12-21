@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { Client } from "@neondatabase/serverless";
 import { env } from "hono/adapter";
 
-const Hooks = {
+const Hooks: Record<string, string[]> = {
   // QSE
   "c147g77m100009l2001": ['Abhinav-ark', 'Ashrockzzz2003'],
   // Amrita PYQ
@@ -57,7 +57,7 @@ app.post('/:webhook', async (c) => {
     const { webhook } = c.req.param();
     const event = c.req.header('X-GitHub-Event');
 
-    if (event === undefined) {
+    if (event === undefined || webhook === undefined) {
       return c.json({
         message: "Forbidden Function Invocation"
       }, 403);
@@ -82,8 +82,8 @@ app.post('/:webhook', async (c) => {
         }
       // For handling of issue labelling, unlabelling, assigning, unassigning
       case 'issues':
-        const action = payload.action;
-        switch (action) {
+        const issueAction = payload.action;
+        switch (issueAction) {
           // Insertion for labelling an issue as AMWOC
           case "labeled":
             const wocLabelAdded = payload.label.name === "AMWOC";
@@ -116,7 +116,7 @@ app.post('/:webhook', async (c) => {
               }, 500);
             }
 
-          // Updation of issue for assignment
+          /* Issue has been assigned */
           case "assigned":
             try {
               await client.query("BEGIN");
@@ -135,7 +135,9 @@ app.post('/:webhook', async (c) => {
 
               await client.query("COMMIT");
 
-              return c.json({}, 200);
+              return c.json({
+                messsage: "Maintainer assigned an issue to " + payload.issue.assignee
+              }, 200);
             } catch (error) {
               await client.query("ROLLBACK");
               console.log(error);
@@ -143,7 +145,7 @@ app.post('/:webhook', async (c) => {
                 message: "Internal Server Error",
               }, 500);
             }
-          // Updation of issue for unassignment
+          /* Issue has been unassigned */
           case "unassigned":
             try {
               await client.query("BEGIN");
@@ -160,7 +162,9 @@ app.post('/:webhook', async (c) => {
               await client.query(updateQuery, [payload.issue.id]);
               await client.query("COMMIT");
 
-              return c.json({}, 200);
+              return c.json({
+                message: "Maintainer unassigned an issue"
+              }, 200);
             } catch (error) {
               await client.query("ROLLBACK");
               console.log(error);
@@ -168,6 +172,7 @@ app.post('/:webhook', async (c) => {
                 message: "Internal Server Error",
               }, 500);
             }
+          /* Issue has been closed (either completed or discarded) */
           case "closed":
             try {
               await client.query("BEGIN");
@@ -183,7 +188,9 @@ app.post('/:webhook', async (c) => {
               const updateQuery = `UPDATE "Issue" SET "issueStatus" = false WHERE "issueId" = $1`;
               await client.query(updateQuery, [payload.issue.id]);
               await client.query("COMMIT");
-              return c.json({}, 200);
+              return c.json({
+                messasge: "Maintainer closed issue"
+              }, 200);
             } catch (error) {
               await client.query("ROLLBACK");
               console.log(error);
@@ -191,6 +198,8 @@ app.post('/:webhook', async (c) => {
                 message: "Internal Server Error",
               }, 500);
             }
+
+          /* Issue was re-opened after closing */
           case "reopened":
             try {
               await client.query("BEGIN");
@@ -200,10 +209,12 @@ app.post('/:webhook', async (c) => {
 
               if (!checkResult.rows[0].exists) {
                 await client.query("COMMIT");
-                return c.json({}, 200);
+                return c.json({
+                  message: "Maintainer re-opened issue"
+                }, 200);
               }
 
-              const updateQuery = `UPDATE "Issue" SET "issueStatus" = false WHERE "issueId" = $1`;
+              const updateQuery = `UPDATE "Issue" SET "issueStatus" = true, "claimedBY" = NULL WHERE "issueId" = $1`;
               await client.query(updateQuery, [payload.issue.id]);
               await client.query("COMMIT");
               return c.json({}, 200);
@@ -218,21 +229,104 @@ app.post('/:webhook', async (c) => {
             break;
         }
       case 'issue_comment':
-        try {
+        const commentedBy = payload.comment.user.login;
+        const isMaintainer = Hooks[webhook].indexOf(commentedBy) !== -1;
+        if (!isMaintainer) {
+          return c.json({
+            message: "Not a maintainer action"
+          }, 200);
+        }
 
-          return c.status(200); // Success
-        } catch (error) {
+        const issueCommentAction = payload.action;
+        switch (issueCommentAction) {
+          // Creating and editing comments both fall under the same category
+          case "edited":
+          case "created":
+            const body = payload.comment.body.split(" ");
+            // Irrelevant comment
+            if (body.length !== 3) {
+              return c.json({
+                message: "Maintainer action irrelevant"
+              }, 200);
+            }
+            /* Adding bounty */
+            if (body[0] === "/bounty") {
+              const point = body[1];
+              const participant = body[2].substring(1); // removing the @ symbol
 
+              try {
+                await client.query("BEGIN");
+
+                // Update bounty log table
+                const logQuery = `INSERT INTO "BountyLog" ("givenBy", "amount", "givenTo") VALUES ($1, $2, $3)`;
+                const logValues = [commentedBy, parseInt(point), participant];
+                await client.query(logQuery, logValues);
+
+                // Award bounty to participant
+                const bountyQuery = `UPDATE "Participant SET "bounty" = "bounty" + $1 WHERE "username" = $2`;
+                const bountyValues = [parseInt(point), participant];
+                await client.query(bountyQuery, bountyValues);
+
+                await client.query("COMMIT");
+                return c.json({
+                  message: "Bounty added by maintainer"
+                }, 200);
+              } catch (error) {
+                await client.query("ROLLBACK");
+                console.log(error);
+                return c.json({
+                  message: "Internal Server Error"
+                }, 500);
+              }
+            }
+            /* Removing a bounty */
+            else if (body[0] === "/remove") {
+              const point = body[1];
+              const participant = body[2].substring(1); // removing the @ symbol
+
+              try {
+                await client.query("BEGIN");
+
+                // Update bounty log table
+                const logQuery = `INSERT INTO "BountyLog" ("givenBy", "amount", "givenTo") VALUES ($1, $2, $3)`;
+                const logValues = [commentedBy, -1 * parseInt(point), participant];
+                await client.query(logQuery, logValues);
+
+                // Remove bounty from participant
+                const bountyQuery = `UPDATE "Participant SET "bounty" = "bounty" + $1 WHERE "username" = $2`;
+                const bountyValues = [-1 * parseInt(point), participant];
+                await client.query(bountyQuery, bountyValues);
+
+                await client.query("COMMIT");
+                return c.json({
+                  message: "Bounty removed by maintainer"
+                }, 200);
+              } catch (error) {
+                await client.query("ROLLBACK");
+                console.log(error);
+                return c.json({
+                  message: "Internal Server Error"
+                }, 500);
+              }
+            }
+            // Comment irrelevant
+            else {
+              return c.json({
+                message: "Maintainer action irrelevant"
+              }, 200);
+            }
+          default:
+            break
         }
       case 'pull_request':
         try {
 
-          return c.status(200); // Success
+          return c.json({}, 200); // Success
         } catch (error) {
 
         }
       default:
-        return c.status(200); // Success
+        return c.json({}, 200); // Success
     }
   } catch (error) {
     return c.json({
@@ -249,7 +343,3 @@ app.post('/:webhook', async (c) => {
  */
 
 export default app
-
-/* -- Bounty Manager
- * "/bounty 25 @IAmRiteshKoushik"
- */
