@@ -40,8 +40,6 @@ const Hooks: Record<string, string[]> = {
 const app = new Hono()
 
 app.get("/test", async (c) => {
-  const body = await c.req.json();
-  console.log(body);
   return c.json({
     message: "Hello from cloudflare"
   }, 200);
@@ -96,7 +94,7 @@ app.post('/:webhook', async (c) => {
             }
             try {
               const query = `INSERT INTO "Issue" ("issueId", "repoId", "url") VALUES($1, $2, $3)`;
-              const values = [payload.issue.id, payload.repository.id, payload.issue.url];
+              const values = [payload.issue.id, payload.repository.id, payload.issue.html_url];
               await client.query(query, values);
               return c.json({}, 200);
             } catch (error) {
@@ -136,7 +134,7 @@ app.post('/:webhook', async (c) => {
               }
 
               const updateQuery = `UPDATE "Issue" SET "claimedBy" = $1 WHERE "issueId" = $2`;
-              const updateValues = [payload.issue.assignee, payload.issue.id];
+              const updateValues = [payload.issue.assignee.login, payload.issue.id];
               await client.query(updateQuery, updateValues);
 
               await client.query("COMMIT");
@@ -253,7 +251,7 @@ app.post('/:webhook', async (c) => {
           // Creating and editing comments both fall under the same category
           case "edited":
           case "created":
-            const body = payload.comment.body.split(" ");
+            const body = payload.comment.body.trim().split(" ");
             // Irrelevant comment
             if (body.length !== 3) {
               return c.json({
@@ -350,7 +348,7 @@ app.post('/:webhook', async (c) => {
           case "labeled":
             const username = payload.pull_request.user.login;
             const repoId = payload.repository.id;
-            const url = payload.pull_request.url;
+            const url = payload.pull_request.html_url;
             try {
               const query = `INSERT INTO "Solution" ("id", "repoId", "username", "url") VALUES ($1, $2, $3, $4)`;
               const values = [id, repoId, username, url];
