@@ -142,7 +142,7 @@ app.post('/:webhook', async (c) => {
               await client.query("COMMIT");
 
               return c.json({
-                messsage: "Maintainer assigned an issue to " + payload.issue.assignee
+                message: "Maintainer assigned an issue to " + payload.issue.assignee
               }, 200);
             } catch (error) {
               await client.query("ROLLBACK");
@@ -156,7 +156,7 @@ app.post('/:webhook', async (c) => {
             try {
               await client.query("BEGIN");
 
-              const checkQuery = `SELECT EXISTS(SELECT 1 from "Issue" WHERE "issueId" = $1`;
+              const checkQuery = `SELECT EXISTS(SELECT 1 from "Issue" WHERE "issueId" = $1)`;
               const checkResult = await client.query(checkQuery, [payload.issue.id]);
 
               if (!checkResult.rows[0].exists) {
@@ -195,7 +195,7 @@ app.post('/:webhook', async (c) => {
               await client.query(updateQuery, [payload.issue.id]);
               await client.query("COMMIT");
               return c.json({
-                messasge: "Maintainer closed issue"
+                message: "Maintainer closed issue"
               }, 200);
             } catch (error) {
               await client.query("ROLLBACK");
