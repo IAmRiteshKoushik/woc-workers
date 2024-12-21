@@ -96,7 +96,7 @@ app.post('/:webhook', async (c) => {
             }
             try {
               const query = `INSERT INTO "Issue" ("issueId", "repoId", "url") VALUES($1, $2, $3)`;
-              const values = [payload.issue.id, payload.issue.url, payload.repository.id];
+              const values = [payload.issue.id, payload.repository.id, payload.issue.url];
               await client.query(query, values);
               return c.json({}, 200);
             } catch (error) {
@@ -125,7 +125,7 @@ app.post('/:webhook', async (c) => {
             try {
               await client.query("BEGIN");
 
-              const checkQuery = `SELECT EXISTS(SELECT 1 from "Issue" WHERE "issueId" = $1`;
+              const checkQuery = `SELECT EXISTS(SELECT 1 from "Issue" WHERE "issueId" = $1)`;
               const checkResult = await client.query(checkQuery, [payload.issue.id]);
 
               if (!checkResult.rows[0].exists) {
@@ -142,7 +142,7 @@ app.post('/:webhook', async (c) => {
               await client.query("COMMIT");
 
               return c.json({
-                messsage: "Maintainer assigned an issue to " + payload.issue.assignee
+                message: "Maintainer assigned an issue to " + payload.issue.assignee
               }, 200);
             } catch (error) {
               await client.query("ROLLBACK");
@@ -156,7 +156,7 @@ app.post('/:webhook', async (c) => {
             try {
               await client.query("BEGIN");
 
-              const checkQuery = `SELECT EXISTS(SELECT 1 from "Issue" WHERE "issueId" = $1`;
+              const checkQuery = `SELECT EXISTS(SELECT 1 from "Issue" WHERE "issueId" = $1)`;
               const checkResult = await client.query(checkQuery, [payload.issue.id]);
 
               if (!checkResult.rows[0].exists) {
@@ -183,7 +183,7 @@ app.post('/:webhook', async (c) => {
             try {
               await client.query("BEGIN");
 
-              const checkQuery = `SELECT EXISTS(SELECT 1 from "Issue" WHERE "issueId" = $1`;
+              const checkQuery = `SELECT EXISTS(SELECT 1 from "Issue" WHERE "issueId" = $1)`;
               const checkResult = await client.query(checkQuery, [payload.issue.id]);
 
               if (!checkResult.rows[0].exists) {
@@ -195,7 +195,7 @@ app.post('/:webhook', async (c) => {
               await client.query(updateQuery, [payload.issue.id]);
               await client.query("COMMIT");
               return c.json({
-                messasge: "Maintainer closed issue"
+                message: "Maintainer closed issue"
               }, 200);
             } catch (error) {
               await client.query("ROLLBACK");
@@ -210,7 +210,7 @@ app.post('/:webhook', async (c) => {
             try {
               await client.query("BEGIN");
 
-              const checkQuery = `SELECT EXISTS(SELECT 1 from "Issue" WHERE "issueId" = $1`;
+              const checkQuery = `SELECT EXISTS(SELECT 1 from "Issue" WHERE "issueId" = $1)`;
               const checkResult = await client.query(checkQuery, [payload.issue.id]);
 
               if (!checkResult.rows[0].exists) {
@@ -220,7 +220,7 @@ app.post('/:webhook', async (c) => {
                 }, 200);
               }
 
-              const updateQuery = `UPDATE "Issue" SET "issueStatus" = true, "claimedBY" = NULL WHERE "issueId" = $1`;
+              const updateQuery = `UPDATE "Issue" SET "issueStatus" = true, "claimedBy" = NULL WHERE "issueId" = $1`;
               await client.query(updateQuery, [payload.issue.id]);
               await client.query("COMMIT");
               return c.json({}, 200);
@@ -274,7 +274,7 @@ app.post('/:webhook', async (c) => {
                 await client.query(logQuery, logValues);
 
                 // Award bounty to participant
-                const bountyQuery = `UPDATE "Participant SET "bounty" = "bounty" + $1 WHERE "username" = $2`;
+                const bountyQuery = `UPDATE "Participant" SET "bounty" = "bounty" + $1 WHERE "username" = $2`;
                 const bountyValues = [parseInt(point), participant];
                 await client.query(bountyQuery, bountyValues);
 
@@ -304,7 +304,7 @@ app.post('/:webhook', async (c) => {
                 await client.query(logQuery, logValues);
 
                 // Remove bounty from participant
-                const bountyQuery = `UPDATE "Participant SET "bounty" = "bounty" + $1 WHERE "username" = $2`;
+                const bountyQuery = `UPDATE "Participant" SET "bounty" = "bounty" + $1 WHERE "username" = $2`;
                 const bountyValues = [-1 * parseInt(point), participant];
                 await client.query(bountyQuery, bountyValues);
 
@@ -349,7 +349,7 @@ app.post('/:webhook', async (c) => {
         switch (prAction) {
           case "labeled":
             const username = payload.pull_request.user.login;
-            const repoId = payload;
+            const repoId = payload.repository.id;
             const url = payload.pull_request.url;
             try {
               const query = `INSERT INTO "Solution" ("id", "repoId", "username", "url") VALUES ($1, $2, $3, $4)`;
