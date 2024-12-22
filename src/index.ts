@@ -6,7 +6,7 @@ const Hooks: Record<string, string[]> = {
   // QSE
   "c147g77m100009l2001": ['Abhinav-ark', 'Ashrockzzz2003'],
   // Amrita PYQ
-  "c147g77m100009l2002": ['Abhinav-ark', 'Ashrockzzz2003'],
+  "c147g77m100009l2002": ['Abhinav-ark', 'Ashrockzzz2003', 'IAmRiteshKoushik'],
   // Amrita Map
   "c147g77m100009l2003": ['Abhinav-ark', 'Ashrockzzz2003'],
   // Match Da Pairs
@@ -18,7 +18,7 @@ const Hooks: Record<string, string[]> = {
   // Placement Tracker Server
   "c147g77m100009l2007": ['Ashrockzzz2003', 'Abhinav-ark'],
   // Data Structures and Algorithms
-  "c147g77m100009l2008": ['Ashrockzzz2003', 'mdxaasil'],
+  "c147g77m100009l2008": ['Ashrockzzz2003', 'mdxaasil', 'VishalTheHuman'],
   // Bluedis
   "c147g77m100009l2009": ['IAmRiteshKoushik'],
   // Timetable CSEA
@@ -90,28 +90,38 @@ app.post('/:webhook', async (c) => {
           case "labeled":
             const wocLabelAdded = payload.label.name === "AMWOC";
             if (wocLabelAdded !== true) {
-              return c.json({}, 200);
+              return c.json({
+                message: "Label not relevant for WoC"
+              }, 200);
             }
             try {
               const query = `INSERT INTO "Issue" ("issueId", "repoId", "url") VALUES($1, $2, $3)`;
               const values = [payload.issue.id, payload.repository.id, payload.issue.html_url];
               await client.query(query, values);
-              return c.json({}, 200);
+              return c.json({
+                message: "Issue accepted for WoC"
+              }, 200);
             } catch (error) {
-              return c.json({}, 500);
+              return c.json({
+                messsage: "Internal Server Error"
+              }, 500);
             }
 
           // Deletion for unlabelling an issue which was AMWOC
           case "unlabeled":
             const wocLabelRemoved = payload.label.name === "AMWOC";
             if (wocLabelRemoved !== true) {
-              return c.json({}, 200);
+              return c.json({
+                message: "Label not relevant for WoC"
+              }, 200);
             }
             try {
               const query = `DELETE FROM "Issue" WHERE "issueId" = $1`;
               const values = [payload.issue.id];
               await client.query(query, values);
-              return c.json({}, 200);
+              return c.json({
+                message: "Issue removed from WoC"
+              }, 200);
             } catch (error) {
               return c.json({
                 message: "Internal Server Error",
@@ -159,7 +169,9 @@ app.post('/:webhook', async (c) => {
 
               if (!checkResult.rows[0].exists) {
                 await client.query("COMMIT");
-                return c.json({}, 200);
+                return c.json({
+                  message: "Issue has not been accepted for WoC"
+                }, 200);
               }
 
               const updateQuery = `UPDATE "Issue" SET "claimedBy" = NULL WHERE "issueId" = $1`;
@@ -230,7 +242,9 @@ app.post('/:webhook', async (c) => {
               }, 500);
             }
           default:
-            break;
+            return c.json({
+              message: "Other Issue actions not handled"
+            }, 200);
         }
 
 
@@ -378,14 +392,16 @@ app.post('/:webhook', async (c) => {
               }, 500);
             }
           default:
-            break;
+            return c.json({
+              message: "Only labelling and unlabelling actions handled for PR"
+            }, 200)
         }
       default:
         return c.json({}, 200); // Success
     }
   } catch (error) {
     return c.json({
-      message: "Internal Server Error",
+      message: "No mechanism to handle this event",
     }, 500);
   }
 });
