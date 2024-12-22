@@ -150,7 +150,7 @@ app.post('/:webhook', async (c) => {
               await client.query("COMMIT");
 
               return c.json({
-                message: "Maintainer assigned an issue to " + payload.issue.assignee
+                message: "Maintainer assigned an issue to " + payload.issue.assignee.login
               }, 200);
             } catch (error) {
               await client.query("ROLLBACK");
