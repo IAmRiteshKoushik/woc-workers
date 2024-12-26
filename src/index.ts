@@ -18,7 +18,7 @@ const Hooks: Record<string, string[]> = {
   // Placement Tracker Server
   "c147g77m100009l2007": ['Ashrockzzz2003', 'Abhinav-ark'],
   // Data Structures and Algorithms
-  "c147g77m100009l2008": ['Ashrockzzz2003', 'mdxaasil', 'VishalTheHuman'],
+  "c147g77m100009l2008": ['Ashrockzzz2003', 'mdxaasil', 'VishalTheHuman', 'FirefoxSRV'],
   // Bluedis
   "c147g77m100009l2009": ['IAmRiteshKoushik'],
   // Timetable CSEA
@@ -35,6 +35,10 @@ const Hooks: Record<string, string[]> = {
   "c147g77m100009l2015": ['SaranDharshanSP'],
   // TN Tourism
   "c147g77m100009l2016": ['SaranDharshanSP'],
+  // Molecule Visualizer
+  "c147g77m100009l2017": ['TharunKumarrA'],
+  // WOC-Leaderboard
+  "c147g77m100009l2018": ['IAmRiteshKoushik']
 }
 
 const app = new Hono()
