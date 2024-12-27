@@ -6,7 +6,7 @@ const Hooks: Record<string, string[]> = {
   // QSE
   "c147g77m100009l2001": ['Abhinav-ark', 'Ashrockzzz2003'],
   // Amrita PYQ
-  "c147g77m100009l2002": ['Abhinav-ark', 'Ashrockzzz2003', 'IAmRiteshKoushik'],
+  "c147g77m100009l2002": ['Abhinav-ark', 'Ashrockzzz2003'],
   // Amrita Map
   "c147g77m100009l2003": ['Abhinav-ark', 'Ashrockzzz2003'],
   // Match Da Pairs
@@ -35,10 +35,15 @@ const Hooks: Record<string, string[]> = {
   "c147g77m100009l2015": ['SaranDharshanSP'],
   // TN Tourism
   "c147g77m100009l2016": ['SaranDharshanSP'],
+  // 17 -> Amrita Sports Management (REMOVED)
   // Molecule Visualizer
-  "c147g77m100009l2017": ['TharunKumarrA'],
+  "c147g77m100009l2018": ['TharunKumarrA'],
   // WOC-Leaderboard
-  "c147g77m100009l2018": ['IAmRiteshKoushik']
+  "c147g77m100009l2019": ['IAmRiteshKoushik', 'Ashrockzzz2003'],
+  // FC-TeamForge Server
+  "c147g77m100009l2020": ['Thanus-Kumaar'],
+  // FC-TeamForge Web
+  "147g77m100009l2021": ['Thanus-Kumaar', 'TharunKumarrA'],
 }
 
 const app = new Hono()
