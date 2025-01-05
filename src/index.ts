@@ -43,7 +43,7 @@ const Hooks: Record<string, string[]> = {
   // FC-TeamForge Server
   "c147g77m100009l2020": ['Thanus-Kumaar'],
   // FC-TeamForge Web
-  "147g77m100009l2021": ['Thanus-Kumaar', 'TharunKumarrA'],
+  "c147g77m100009l2021": ['Thanus-Kumaar', 'TharunKumarrA'],
 }
 
 const app = new Hono()
